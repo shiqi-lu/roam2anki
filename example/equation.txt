@@ -1,0 +1,8 @@
+- Q:支持代码块的导入
+    - 需要学习模板的内如何嵌入js和css，并作为资源本地同步
+- Q:把原始问题转换为广义拉格朗日函数(generalized Lagrange function)是怎样的？
+    - $$L(x, \alpha, \beta)=f(x)+\sum_{i=1}^{k} \alpha_{i} c_{i}(x)+\sum_{j=1}^{l} \beta_{j} h_{j}(x)$$
+    - 这里，$$x=\left(x^{(1)}, x^{(2)}, \cdots, x^{(n)}\right)^{\mathrm{T}} \in \mathbf{R}^{n}, \alpha_{i}, \beta_{j}$$是拉格朗日乘子，$$\alpha_{i} \geqslant 0$$
+    - 定义一个x的函数，即把广义拉格朗日函数取最值
+    - $$\theta_{P}(x)=\max _{\alpha, \beta: \alpha_{i} \geqslant 0} L(x, \alpha, \beta)$$
+    - 这里，下标P表示原问题
