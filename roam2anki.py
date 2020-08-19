@@ -19,8 +19,14 @@ HIGHLIGHT_PATTERN = r"\^\^(.*?)\^\^"
 INLINECODE_PATTERN = r"`(.+?)`"
 INLINE_EQUATION_PATTERN = r"\$\$(.*?)\$\$"
 
-file_path = "example/all.txt"
+file_path = "example/h123.txt"
 output_path = file_path.replace(".txt", ".csv")
+
+# 强制选择代码格式：
+# none表示不选，为空
+# inherit表示直接继承自```后面定义的
+# 其它的都强制写入
+codeblock_format = ""
 
 output = pd.DataFrame(columns=['Q', 'A'])
 
@@ -167,6 +173,9 @@ with open(file_path, 'r', encoding='utf-8') as f:
     question_state = False
     current_answer_state = -1
     previous_answer_state = -1
+    h1 = False
+    h2 = False
+    h3 = False
     for line in f.readlines():
         line = line.strip('\n')
         if not line.strip():
@@ -175,6 +184,7 @@ with open(file_path, 'r', encoding='utf-8') as f:
         if line.startswith(question_prefix):
             # 结束上一个答案后的保存操作
             if Q and not is_A_empty(A_list):
+
                 output = save_A_list(A_list, output)
                 Q = ""
                 A_list = ["", "", "", "", "", ""]
@@ -184,7 +194,16 @@ with open(file_path, 'r', encoding='utf-8') as f:
             # 匹配行内格式
             line = all_inline_format(line)
             # 匹配到行内公式
-            Q = inline_equation(line)
+            line = inline_equation(line)
+            if line.startswith("# "):
+                Q = "<h1>" + line[2:]
+                h1 = True
+            elif line.startswith("## "):
+                Q = "<h2>" + line[3:]
+                h2 = True
+            elif line.startswith("### "):
+                Q = "<h3>" + line[4:]
+                h3 = True
             current_answer_state = 0
             previous_answer_state = 0
             continue
@@ -194,35 +213,65 @@ with open(file_path, 'r', encoding='utf-8') as f:
         if current_answer_state > 0:
             # 此时进入答案区
             if question_state:
+                # 因为限制了问题只能有一个块，可以直接在结束赋值
+                if h1:
+                    Q += "</h1>"
+                    h1 = False
+                elif h2:
+                    Q += "</h2>"
+                    h2 = False
+                elif h3:
+                    Q += "</h3>"
+                    h3 = False
                 question_state = False
             # 去掉答案开头的多级格式
             line = line[prefix_length[current_answer_state]:]
             # 答案区行内，多行开始处理
 
-            # 行内，行间公式处理
-            line = inline_equation(block_equation(line))
+            # 行间公式处理
+            line = block_equation(line)
             # 多行代码匹配开始
             # todo：取消必须占据一行的限制
             if line.startswith("```"):
                 multiline_code = True
                 line = line[3:]
+                # todo: 验证一下是否所有的代码块的```后都紧跟着代码名字，如果是就直接解析
                 for codename in codename_set:
                     if line.startswith(codename):
                         line = line[len(codename):]
                         break
-                line = "<pre><code>" + line
-
-            # 多行行间公式匹配开始
-            if line.startswith("$$"):
+                if not codeblock_format:
+                    line = "<pre><code>" + line
+                elif codeblock_format == "inherit":
+                    line = f"<pre><code class={codename}>" + line
+                else:
+                    line = f"<pre><code class={codeblock_format}>" + line
+            elif line.startswith("$$"):
+                # 多行行间公式匹配开始
                 multiline_equation = True
                 line = "\\[" + line[2:]
-
-            # 仅在非多行公式和非多行代码才匹配所有行内格式
-            if not multiline_code and not multiline_equation:
+            elif not multiline_code and not multiline_equation:
+                # 仅在非多行公式和非多行代码才匹配所有行内格式
                 line = all_inline_format(line)
+                line = inline_equation(line)
+                if line.startswith("# "):
+                    line = "<h1>" + line[2:] + "</h1>"
+                    h1 = True
+                elif line.startswith("## "):
+                    line = "<h2>" + line[3:] + "</h2>"
+                    h2 = True
+                elif line.startswith("### "):
+                    line = "<h3>" + line[4:] + "</h3>"
+                    h3 = True
 
-            if current_answer_state >= previous_answer_state:
-                # 每上升一级或平级时，在当前级别更新列表
+            if current_answer_state > previous_answer_state:
+                # 每上升一级时，在当前级别更新列表
+                if multiline_code:
+                    A_list[current_answer_state] += "<li>" + line
+                else:
+                    A_list[current_answer_state] += "<li>" + line + "</li>"
+            elif current_answer_state > previous_answer_state:
+                # 平级时，在当前级别更新列表
                 if multiline_code:
                     A_list[current_answer_state] += "<li>" + line
                 else:
@@ -265,8 +314,17 @@ with open(file_path, 'r', encoding='utf-8') as f:
                         line = line[:-2] + "\\]"
                 if A_list[previous_answer_state].endswith("</li>"):
                     A_list[previous_answer_state] = A_list[previous_answer_state][:-5]
+                    if h1 or h2 or h3:
+                        A_list[previous_answer_state] = A_list[previous_answer_state][:-5]
                     A_list[previous_answer_state] += "<br>"
-                    A_list[previous_answer_state] += line + "</li>"
+                    A_list[previous_answer_state] += line
+                    if h1:
+                        A_list[previous_answer_state] += "</h1>"
+                    elif h2:
+                        A_list[previous_answer_state] += "</h2>"
+                    elif h3:
+                        A_list[previous_answer_state] += "</h3>"
+                    A_list[previous_answer_state] += "</li>"
                 else:
                     raise Exception("can't be here, str:", line)
     else:
