@@ -19,7 +19,7 @@ HIGHLIGHT_PATTERN = r"\^\^(.*?)\^\^"
 INLINECODE_PATTERN = r"`(.+?)`"
 INLINE_EQUATION_PATTERN = r"\$\$(.*?)\$\$"
 
-file_path = "example/h123.txt"
+file_path = "example/all.txt"
 output_path = file_path.replace(".txt", ".csv")
 
 # 强制选择代码格式：
@@ -50,7 +50,7 @@ def block_equation(line):
     else:
         return line
 
-# todo：正则表达式匹配不了latex公式
+# 正则表达式匹配不了latex公式
 def inline_equation1(line):
     res = re.findall(INLINE_EQUATION_PATTERN, line)
     if not res:
@@ -144,6 +144,20 @@ def italics(line):
 def all_inline_format(line):
     return italics(inlinecode(strikestrough(highlight(bold(hyperlink(img(line)))))))
 
+def code_block_start(line):
+    # todo: 验证一下是否所有的代码块的```后都紧跟着代码名字，如果是就直接解析
+    for codename in codename_set:
+        if line.startswith(codename):
+            line = line[len(codename):]
+            break
+    if not codeblock_format:
+        line = "<pre><code>" + line
+    elif codeblock_format == "inherit":
+        line = f"<pre><code class={codename}>" + line
+    else:
+        line = f"<pre><code class={codeblock_format}>" + line
+    return line
+
 def is_A_empty(A):
     for item in A:
         if item:
@@ -171,8 +185,8 @@ with open(file_path, 'r', encoding='utf-8') as f:
     multiline_equation = False
     multiline_code = False
     question_state = False
-    current_answer_state = -1
-    previous_answer_state = -1
+    current_answer_state = 0
+    previous_answer_state = 0
     h1 = False
     h2 = False
     h3 = False
@@ -184,26 +198,35 @@ with open(file_path, 'r', encoding='utf-8') as f:
         if line.startswith(question_prefix):
             # 结束上一个答案后的保存操作
             if Q and not is_A_empty(A_list):
-
                 output = save_A_list(A_list, output)
                 Q = ""
                 A_list = ["", "", "", "", "", ""]
+                multiline_equation = False
+                multiline_code = False
             # 状态：开始新问题时的处理
             question_state = True
             line = line[len(question_prefix):]
-            # 匹配行内格式
-            line = all_inline_format(line)
-            # 匹配到行内公式
-            line = inline_equation(line)
-            if line.startswith("# "):
-                Q = "<h1>" + line[2:]
-                h1 = True
-            elif line.startswith("## "):
-                Q = "<h2>" + line[3:]
-                h2 = True
-            elif line.startswith("### "):
-                Q = "<h3>" + line[4:]
-                h3 = True
+            if line.startswith("```"):
+                multiline_code = True
+                line = line[3:]
+                line = code_block_start(line)
+                Q = line
+            else:
+                # 仅在非代码块时匹配行内格式
+                line = all_inline_format(line)
+                # 匹配到行内公式
+                line = inline_equation(line)
+                if line.startswith("# "):
+                    Q = "<h1>" + line[2:]
+                    h1 = True
+                elif line.startswith("## "):
+                    Q = "<h2>" + line[3:]
+                    h2 = True
+                elif line.startswith("### "):
+                    Q = "<h3>" + line[4:]
+                    h3 = True
+                else:
+                    Q = line
             current_answer_state = 0
             previous_answer_state = 0
             continue
@@ -235,17 +258,7 @@ with open(file_path, 'r', encoding='utf-8') as f:
             if line.startswith("```"):
                 multiline_code = True
                 line = line[3:]
-                # todo: 验证一下是否所有的代码块的```后都紧跟着代码名字，如果是就直接解析
-                for codename in codename_set:
-                    if line.startswith(codename):
-                        line = line[len(codename):]
-                        break
-                if not codeblock_format:
-                    line = "<pre><code>" + line
-                elif codeblock_format == "inherit":
-                    line = f"<pre><code class={codename}>" + line
-                else:
-                    line = f"<pre><code class={codeblock_format}>" + line
+                line = code_block_start(line)
             elif line.startswith("$$"):
                 # 多行行间公式匹配开始
                 multiline_equation = True
@@ -289,13 +302,24 @@ with open(file_path, 'r', encoding='utf-8') as f:
             previous_answer_state = current_answer_state
         else:
             # todo: 支持多行里的代码块处理
-            # 行内公式处理，多行里不处理行间公式
-            line = inline_equation(line)
+            if not multiline_code and line.startswith("```"):
+                multiline_code = True
+                line = line[3:]
+                line = code_block_start(line)
             if not multiline_code and not multiline_equation:
                 line = all_inline_format(line)
+                # 行内公式处理，多行里不处理行间公式
+                line = inline_equation(line)
             if question_state:
                 # 此时在问题区，但在多行里
-                Q += "<br>" + line
+                if multiline_code:
+                    if line.endswith("```"):
+                        Q += "\n" + line[:-3] + "</pre></code>"
+                        multiline_code = False
+                    else:
+                        Q += "\n" + line
+                else:
+                    Q += "<br>" + line
             else:
                 # 检测到处于0级时，此时是处于previous级答案中，但是在多行里
 
