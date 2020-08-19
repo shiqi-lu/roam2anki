@@ -211,7 +211,7 @@ def main(file_path):
             # print(len(line), line)
             if line.startswith(question_prefix):
                 # 结束上一个答案后的保存操作
-                if Q and not is_A_empty(A_list):
+                if Q:
                     output = save_A_list(Q, A_list, output)
                     Q = ""
                     A_list = ["", "", "", "", "", ""]
