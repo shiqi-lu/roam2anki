@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import pandas as pd
 
@@ -159,11 +160,11 @@ def code_block_start(line):
         line = "<pre><code>" + line
     elif codeblock_format == "inherit":
         if codename:
-            line = f"<pre><code class={codename}>" + line
+            line = f'<pre><code class="{codename}">' + line
         else:
             line = "<pre><code>" + line
     else:
-        line = f"<pre><code class={codeblock_format}>" + line
+        line = f'<pre><code class="{codeblock_format}">' + line
     return line
 
 
@@ -181,8 +182,8 @@ def save_A_list(Q, A_list, output):
             A_list[index - 1] += "<ul>\n" + A_list[index] + "\n</ul>"
         index -= 1
 
-    print("Q:", Q)
-    print("A:", A_list[0])
+    # print("Q:", Q)
+    # print("A:", A_list[0])
     return output.append([{'Q': Q, 'A': A_list[0]}], ignore_index=True)
 
 
@@ -207,7 +208,7 @@ def main(file_path):
             line = line.strip('\n')
             if not line.strip():
                 continue
-            print(len(line), line)
+            # print(len(line), line)
             if line.startswith(question_prefix):
                 # 结束上一个答案后的保存操作
                 if Q and not is_A_empty(A_list):
@@ -366,13 +367,36 @@ def main(file_path):
         else:
             # 结束，最后一组问答要保存一下
             output = save_A_list(Q, A_list, output)
-            print("Q:", Q)
-            print("A:", A_list[0])
 
-    print(output)
+    # print(output)
     output.to_csv(output_path, sep='\t', header=False, index=False)
 
 
+def print_help_and_exit():
+    print("Usage: python roam2anki.py FILE/DIR [codeformat]")
+    exit(1)
+
+
 if __name__ == '__main__':
-    file_path = "example/all.txt"
-    main(file_path)
+    path = ""
+    if len(sys.argv) == 2:
+        path = sys.argv[1]
+    elif len(sys.argv) == 3:
+        path = sys.argv[1]
+        codeblock_format = sys.argv[2]
+    else:
+        print_help_and_exit()
+
+    if not os.path.exists(path):
+        print_help_and_exit()
+    if os.path.isfile(path):
+        if not path.endswith(".txt"):
+            print_help_and_exit()
+        main(path)
+    elif os.path.isdir(path):
+        for filename in os.listdir(path):
+            full_path = os.path.join(path, filename)
+            if os.path.isfile(full_path) and full_path.endswith(".txt"):
+                main(full_path)
+    else:
+        print_help_and_exit()
