@@ -1,25 +1,28 @@
 import os
+import re
 import pandas as pd
 
 codename_set = {"clojure", "css", "javascript", "html"}
 
 question_prefix = "- "
-answer_prefix = "    - "
-prefix_length = [0, 6, 10, 14, 18, 22]
-answer_state_prefix = ["", "    - ", "        - ", "            - ",
-                       "                - ", "                    - "]
+prefix_length = [0, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42]
+answer_state_prefix = ["", " "*4+"- ", " "*8+"- ", " "*12+"- ", " "*16+"- ", " "*20+"- ",
+                       " "*24+"- ", " "*28+"- ", " "*32+"- ", " "*36+"- ", " "*40+"- ",]
 
-file_path = "example/1q1a.txt"
+DOUBLE_SQUARE_BRACKET_PATTERN = r"\[\[(.*?)\]\]"
+IMG_PATTERN = r"!\[(.*?)\]\((.+?)\)"
+HYPERLINK_PATTERN = r"\[(.+?)\]\((.+?)\)"
+BOLD_PATTERN = r"\*\*(.*?)\*\*"
+ITALICS_PATTERN = r"__(.*?)__"
+STRIKETHROUGHT_PATTERN = r"~~(.*?)~~"
+HIGHLIGHT_PATTERN = r"\^\^(.*?)\^\^"
+INLINECODE_PATTERN = r"`(.+?)`"
+INLINE_EQUATION_PATTERN = r"\$\$(.*?)\$\$"
+
+file_path = "example/all.txt"
 output_path = file_path.replace(".txt", ".csv")
 
 output = pd.DataFrame(columns=['Q', 'A'])
-
-
-def is_A_empty(A):
-    for item in A:
-        if item:
-            return False
-    return True
 
 
 def detect_answer_state(line, answer_state_prefix):
@@ -34,10 +37,24 @@ def detect_answer_state(line, answer_state_prefix):
 def block_equation(line):
     """行间公式，把前后的$$换成\[\]"""
     if line.startswith("$$") and line.endswith("$$"):
+        # 若中间还存在$$说明不是行间公式
+        if "$$" in line[2:-2]:
+            return line
         return "\\[" + line[2:-2] + "\\]"
     else:
         return line
 
+# todo：正则表达式匹配不了latex公式
+def inline_equation1(line):
+    res = re.findall(INLINE_EQUATION_PATTERN, line)
+    if not res:
+        return line
+    newline = line
+    while len(res) > 0:
+        html = "\(" + res[0] + "\)"
+        newline = re.sub(INLINE_EQUATION_PATTERN, html, newline, count=1)
+        res = re.findall(INLINE_EQUATION_PATTERN, newline)
+    return newline
 
 def inline_equation(line):
     """行内公式，把前后的$$换成\(\)"""
@@ -51,6 +68,81 @@ def inline_equation(line):
         if i % 2 == 1 and item:
             split_list[i] = "\\(" + item + "\\)"
     return "".join(split_list)
+
+def remove_double_square_bracket(line):
+    res = re.findall(DOUBLE_SQUARE_BRACKET_PATTERN, line)
+    if not res:
+        return line
+    newline = line
+    while len(res) > 0:
+        newline = re.sub(DOUBLE_SQUARE_BRACKET_PATTERN, res[0], newline, count=1)
+        res = re.findall(DOUBLE_SQUARE_BRACKET_PATTERN, newline)
+    return newline
+
+def img(line):
+    res = re.findall(IMG_PATTERN, line)
+    if not res:
+        return line
+    newline = line
+    while len(res) > 0:
+        alt, src = res[0]
+        html = f'<img src="{src}", alt="{alt}">'
+        newline = re.sub(IMG_PATTERN, html, newline, count=1)
+        res = re.findall(IMG_PATTERN, newline)
+    return newline
+
+def hyperlink(line):
+    res = re.findall(HYPERLINK_PATTERN, line)
+    if not res:
+        return line
+    newline = line
+    while len(res) > 0:
+        text, url = res[0]
+        html = f'<a href="{url}">{text}</a>'
+        newline = re.sub(HYPERLINK_PATTERN, html, newline, count=1)
+        res = re.findall(HYPERLINK_PATTERN, newline)
+    return newline
+
+def basic_inline_format(line, PATTERN, style_name):
+    res = re.findall(PATTERN, line)
+    if not res:
+        return line
+    newline = line
+    while len(res) > 0:
+        content = res[0]
+        html = f'<span class="{style_name}">{content}</span>'
+        newline = re.sub(PATTERN, html, newline, count=1)
+        res = re.findall(PATTERN, newline)
+    return newline
+
+
+def bold(line):
+    return basic_inline_format(line, BOLD_PATTERN, "bold")
+
+
+def highlight(line):
+    return basic_inline_format(line, HIGHLIGHT_PATTERN, "highlight")
+
+
+def strikestrough(line):
+    return basic_inline_format(line, STRIKETHROUGHT_PATTERN, "strikethrough")
+
+
+def inlinecode(line):
+    return basic_inline_format(line, INLINECODE_PATTERN, "inlinecode")
+
+
+def italics(line):
+    return basic_inline_format(line, ITALICS_PATTERN, "italic")
+
+def all_inline_format(line):
+    return italics(inlinecode(strikestrough(highlight(bold(hyperlink(img(line)))))))
+
+def is_A_empty(A):
+    for item in A:
+        if item:
+            return False
+    return True
 
 
 def save_A_list(A_list, output):
@@ -89,6 +181,9 @@ with open(file_path, 'r', encoding='utf-8') as f:
             # 状态：开始新问题时的处理
             question_state = True
             line = line[len(question_prefix):]
+            # 匹配行内格式
+            line = all_inline_format(line)
+            # 匹配到行内公式
             Q = inline_equation(line)
             current_answer_state = 0
             previous_answer_state = 0
@@ -116,15 +211,15 @@ with open(file_path, 'r', encoding='utf-8') as f:
                         line = line[len(codename):]
                         break
                 line = "<pre><code>" + line
-            # 匹配到图片
-            # todo:得使用正则来重写，并且取消占据一整行的限制
-            if line.startswith("![](") and line.endswith(")"):
-                line = line[4:-1]
-                line = '<img src="' + line + '">'
+
             # 多行行间公式匹配开始
             if line.startswith("$$"):
                 multiline_equation = True
                 line = "\\[" + line[2:]
+
+            # 仅在非多行公式和非多行代码才匹配所有行内格式
+            if not multiline_code and not multiline_equation:
+                line = all_inline_format(line)
 
             if current_answer_state >= previous_answer_state:
                 # 每上升一级或平级时，在当前级别更新列表
@@ -144,10 +239,11 @@ with open(file_path, 'r', encoding='utf-8') as f:
                     A_list[current_answer_state] += "<li>" + line + "</li>"
             previous_answer_state = current_answer_state
         else:
-            # todo: 多行图片里的处理
             # todo: 支持多行里的代码块处理
             # 行内公式处理，多行里不处理行间公式
             line = inline_equation(line)
+            if not multiline_code and not multiline_equation:
+                line = all_inline_format(line)
             if question_state:
                 # 此时在问题区，但在多行里
                 Q += "<br>" + line
@@ -177,7 +273,6 @@ with open(file_path, 'r', encoding='utf-8') as f:
         output = save_A_list(A_list, output)
         print("Q:", Q)
         print("A:", A_list[0])
-
 
 print(output)
 output.to_csv(output_path, sep='\t', header=False, index=False)
