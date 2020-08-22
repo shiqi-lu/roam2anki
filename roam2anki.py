@@ -38,6 +38,8 @@ def detect_answer_state(line, answer_state_prefix):
 
 def block_equation(line):
     """行间公式，把前后的$$换成\[\]"""
+    if len(line) <= 4:
+        return line
     if line.startswith("$$") and line.endswith("$$"):
         # 若中间还存在$$说明不是行间公式
         if "$$" in line[2:-2]:
@@ -273,7 +275,7 @@ def main(file_path):
                     multiline_code = True
                     line = line[3:]
                     line = code_block_start(line)
-                elif line.startswith("$$"):
+                elif line.startswith("$$") and "$$" not in line[2:]:
                     # 多行行间公式匹配开始
                     multiline_equation = True
                     line = "\\[" + line[2:]
