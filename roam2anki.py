@@ -203,7 +203,7 @@ def main(file_path):
         Q = ""
         # A[i]对应某一级中的内容
         # 其中A[0]不用，仅在要保存答案的时候逐级把后面内容合并到A[0]，A[0]为最终答案
-        A_list = ["", "", "", "", "", ""]
+        A_list = [""] * 11
 
         multiline_equation = False
         multiline_code_first_line = False
@@ -224,7 +224,7 @@ def main(file_path):
                 if Q and not question_state:
                     output = save_A_list(Q, A_list, output)
                     Q = ""
-                    A_list = ["", "", "", "", "", ""]
+                    A_list = [""] * 11
                     multiline_equation = False
                     multiline_code = False
                     multiline_code_first_line = False
@@ -418,13 +418,13 @@ def main(file_path):
                         line = html.escape(line)
                         line = all_inline_format(line)
                         if h1:
-                            Q += "<br>" + html.escape(line[:-5]) + "</h1>"
+                            Q += "<br>" + line[:-5] + "</h1>"
                         elif h2:
-                            Q += "<br>" + html.escape(line[:-5]) + "</h2>"
+                            Q += "<br>" + line[:-5] + "</h2>"
                         elif h3:
-                            Q += "<br>" + html.escape(line[:-5]) + "</h3>"
+                            Q += "<br>" + line[:-5] + "</h3>"
                         else:
-                            Q += "<br>" + html.escape(line)
+                            Q += "<br>" + line
                 else:
                     # 检测到处于0级时，此时是处于previous级答案中，但是在多行里
 
