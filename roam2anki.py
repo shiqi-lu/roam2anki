@@ -45,6 +45,11 @@ def block_equation(line):
         if "$$" in line[2:-2]:
             return line
         return "\\[" + line[2:-2] + "\\]"
+    elif line.startswith('"$$') and line.endswith('$$"'):
+        # 支持引用的行间公式
+        if "$$" in line[3:-3]:
+            return line
+        return "\\[" + line[3:-3] + "\\]"
     else:
         return line
 
@@ -147,7 +152,7 @@ def italics(line):
 
 
 def all_inline_format(line):
-    return italics(inlinecode(strikestrough(highlight(bold(hyperlink(img(line)))))))
+    return remove_double_square_bracket(italics(inlinecode(strikestrough(highlight(bold(hyperlink(img(line))))))))
 
 
 def code_block_start(line):
@@ -213,36 +218,55 @@ def main(file_path):
             # print(len(line), line)
             if line.startswith(question_prefix):
                 # 结束上一个答案后的保存操作
-                if Q:
+                if Q and not question_state:
                     output = save_A_list(Q, A_list, output)
                     Q = ""
                     A_list = ["", "", "", "", "", ""]
                     multiline_equation = False
                     multiline_code = False
                 # 状态：开始新问题时的处理
-                question_state = True
+
+                h1 = False
+                h2 = False
+                h3 = False
                 line = line[len(question_prefix):]
                 if line.startswith("```"):
                     multiline_code = True
                     line = line[3:]
                     line = code_block_start(line)
-                    Q = line
+                    Q += line
+                elif line.startswith('"```'):
+                    multiline_code = True
+                    line = line[4:]
+                    line = code_block_start(line)
+                    Q += line
+                elif line.startswith("$$") and "$$" not in line[2:]:
+                    # 多行行间公式匹配开始
+                    multiline_equation = True
+                    Q += "\\[" + line[2:]
+                elif line.startswith('"$$') and "$$" not in line[3:]:
+                    # 带引用的多行行间公式匹配开始
+                    multiline_equation = True
+                    Q += "\\[" + line[3:]
                 else:
                     # 仅在非代码块时匹配行内格式
                     line = all_inline_format(line)
                     # 匹配到行内公式
-                    line = inline_equation(line)
+                    line = inline_equation(block_equation(line))
+                    if question_state:
+                        Q += "<br>"
                     if line.startswith("# "):
-                        Q = "<h1>" + line[2:]
+                        Q += "<h1>" + line[2:] + "</h1>"
                         h1 = True
                     elif line.startswith("## "):
-                        Q = "<h2>" + line[3:]
+                        Q += "<h2>" + line[3:] + "</h2>"
                         h2 = True
                     elif line.startswith("### "):
-                        Q = "<h3>" + line[4:]
+                        Q += "<h3>" + line[4:] + "</h3>"
                         h3 = True
                     else:
-                        Q = line
+                        Q += line
+                question_state = True
                 current_answer_state = 0
                 previous_answer_state = 0
                 continue
@@ -251,17 +275,10 @@ def main(file_path):
             # 检测到是答案处于1~5级时
             if current_answer_state > 0:
                 # 此时进入答案区
+                h1 = False
+                h2 = False
+                h3 = False
                 if question_state:
-                    # 因为限制了问题只能有一个块，可以直接在结束赋值
-                    if h1:
-                        Q += "</h1>"
-                        h1 = False
-                    elif h2:
-                        Q += "</h2>"
-                        h2 = False
-                    elif h3:
-                        Q += "</h3>"
-                        h3 = False
                     question_state = False
                 # 去掉答案开头的多级格式
                 line = line[prefix_length[current_answer_state]:]
@@ -275,10 +292,18 @@ def main(file_path):
                     multiline_code = True
                     line = line[3:]
                     line = code_block_start(line)
+                elif line.startswith('"```'):
+                    multiline_code = True
+                    line = line[4:]
+                    line = code_block_start(line)
                 elif line.startswith("$$") and "$$" not in line[2:]:
                     # 多行行间公式匹配开始
                     multiline_equation = True
                     line = "\\[" + line[2:]
+                elif line.startswith('"$$') and "$$" not in line[3:]:
+                    # 带引用的多行行间公式匹配开始
+                    multiline_equation = True
+                    line = "\\[" + line[3:]
                 elif not multiline_code and not multiline_equation:
                     # 仅在非多行公式和非多行代码才匹配所有行内格式
                     line = all_inline_format(line)
@@ -321,6 +346,10 @@ def main(file_path):
                     multiline_code = True
                     line = line[3:]
                     line = code_block_start(line)
+                elif not multiline_code and line.startswith('"```'):
+                    multiline_code = True
+                    line = line[4:]
+                    line = code_block_start(line)
                 if not multiline_code and not multiline_equation:
                     line = all_inline_format(line)
                     # 行内公式处理，多行里不处理行间公式
@@ -333,8 +362,30 @@ def main(file_path):
                             multiline_code = False
                         else:
                             Q += "\n" + line
+                    elif multiline_code:
+                        if line.endswith('```"'):
+                            Q += "\n" + line[:-4] + "</pre></code>"
+                            multiline_code = False
+                        else:
+                            Q += "\n" + line
+                    elif multiline_equation:
+                        if line.endswith("$$"):
+                            multiline_equation = False
+                            Q += line[:-2] + "\\]"
+                        elif line.endswith('$$"'):
+                            multiline_equation = False
+                            Q += line[:-3] + "\\]"
+                        else:
+                            Q += "<br>" + line
                     else:
-                        Q += "<br>" + line
+                        if h1:
+                            Q += "<br>" + line[:-5] + "</h1>"
+                        elif h2:
+                            Q += "<br>" + line[:-5] + "</h2>"
+                        elif h3:
+                            Q += "<br>" + line[:-5] + "</h3>"
+                        else:
+                            Q += "<br>" + line
                 else:
                     # 检测到处于0级时，此时是处于previous级答案中，但是在多行里
 
@@ -343,14 +394,20 @@ def main(file_path):
                         if line.endswith("```"):
                             A_list[previous_answer_state] += "\n" + line[:-3] + "</pre></code></li>"
                             multiline_code = False
+                        elif line.endswith('```"'):
+                            A_list[previous_answer_state] += "\n" + line[:-4] + "</pre></code></li>"
+                            multiline_code = False
                         else:
                             A_list[previous_answer_state] += "\n" + line
                         continue
                     # 多行行间公式匹配结束
-                    if multiline_equation:
+                    elif multiline_equation:
                         if line.endswith("$$"):
                             multiline_equation = False
                             line = line[:-2] + "\\]"
+                        elif line.endswith('$$"'):
+                            multiline_equation = False
+                            line = line[:-3] + "\\]"
                     if A_list[previous_answer_state].endswith("</li>"):
                         A_list[previous_answer_state] = A_list[previous_answer_state][:-5]
                         if h1 or h2 or h3:
@@ -380,6 +437,8 @@ def print_help_and_exit():
 
 
 if __name__ == '__main__':
+    # main("example/1q1a.txt")
+    # exit(0)
     path = ""
     if len(sys.argv) == 2:
         path = sys.argv[1]
