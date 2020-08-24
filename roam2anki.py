@@ -164,16 +164,17 @@ def code_block_start(line):
             line = line[len(code):]
             codename = code
             break
+    html_start = ""
     if not codeblock_format:
-        line = "<pre><code>" + line
+        html_start = "<pre><code>"
     elif codeblock_format == "inherit":
         if codename:
-            line = f'<pre><code class="{codename}">' + line
+            html_start = f'<pre><code class="{codename}">'
         else:
-            line = "<pre><code>" + line
+            html_start = "<pre><code>"
     else:
-        line = f'<pre><code class="{codeblock_format}">' + line
-    return line
+        html_start = f'<pre><code class="{codeblock_format}">'
+    return html_start + html.escape(line)
 
 
 def is_A_empty(A):
@@ -205,6 +206,7 @@ def main(file_path):
         A_list = ["", "", "", "", "", ""]
 
         multiline_equation = False
+        multiline_code_first_line = False
         multiline_code = False
         question_state = False
         current_answer_state = 0
@@ -225,6 +227,7 @@ def main(file_path):
                     A_list = ["", "", "", "", "", ""]
                     multiline_equation = False
                     multiline_code = False
+                    multiline_code_first_line = False
                 # 状态：开始新问题时的处理
 
                 h1 = False
@@ -233,11 +236,13 @@ def main(file_path):
                 line = line[len(question_prefix):]
                 if line.startswith("```"):
                     multiline_code = True
+                    multiline_code_first_line = True
                     line = line[3:]
                     line = code_block_start(line)
                     Q += html.escape(line)
                 elif line.startswith('"```'):
                     multiline_code = True
+                    multiline_code_first_line = True
                     line = line[4:]
                     line = code_block_start(line)
                     Q += html.escape(line)
@@ -251,22 +256,22 @@ def main(file_path):
                     Q += "\\[" + html.escape(line[3:])
                 else:
                     # 仅在非代码块时匹配行内格式
-                    line = all_inline_format(line)
-                    # 匹配到行内公式
                     line = inline_equation(block_equation(line))
+                    line = html.escape(line)
+                    line = all_inline_format(line)
                     if question_state:
                         Q += "<br>"
                     if line.startswith("# "):
-                        Q += "<h1>" + html.escape(line[2:]) + "</h1>"
+                        Q += "<h1>" + line[2:] + "</h1>"
                         h1 = True
                     elif line.startswith("## "):
-                        Q += "<h2>" + html.escape(line[3:]) + "</h2>"
+                        Q += "<h2>" + line[3:] + "</h2>"
                         h2 = True
                     elif line.startswith("### "):
-                        Q += "<h3>" + html.escape(line[4:]) + "</h3>"
+                        Q += "<h3>" + line[4:] + "</h3>"
                         h3 = True
                     else:
-                        Q += html.escape(line)
+                        Q += line
                 question_state = True
                 current_answer_state = 0
                 previous_answer_state = 0
@@ -291,12 +296,14 @@ def main(file_path):
                 # todo：取消必须占据一行的限制
                 if line.startswith("```"):
                     multiline_code = True
+                    multiline_code_first_line = True
                     line = line[3:]
-                    line = html.escape(code_block_start(line))
+                    line = code_block_start(line)
                 elif line.startswith('"```'):
                     multiline_code = True
+                    multiline_code_first_line = True
                     line = line[4:]
-                    line = html.escape(code_block_start(line))
+                    line = code_block_start(line)
                 elif line.startswith("$$") and "$$" not in line[2:]:
                     # 多行行间公式匹配开始
                     multiline_equation = True
@@ -307,19 +314,18 @@ def main(file_path):
                     line = "\\[" + html.escape(line[3:])
                 elif not multiline_code and not multiline_equation:
                     # 仅在非多行公式和非多行代码才匹配所有行内格式
-                    line = all_inline_format(line)
                     line = inline_equation(line)
+                    line = html.escape(line)
+                    line = all_inline_format(line)
                     if line.startswith("# "):
-                        line = "<h1>" + html.escape(line[2:]) + "</h1>"
+                        line = "<h1>" + line[2:] + "</h1>"
                         h1 = True
                     elif line.startswith("## "):
-                        line = "<h2>" + html.escape(line[3:]) + "</h2>"
+                        line = "<h2>" + line[3:] + "</h2>"
                         h2 = True
                     elif line.startswith("### "):
-                        line = "<h3>" + html.escape(line[4:]) + "</h3>"
+                        line = "<h3>" + line[4:] + "</h3>"
                         h3 = True
-                    else:
-                        line = html.escape(line)
                 else:
                     line = html.escape(line)
 
@@ -349,30 +355,54 @@ def main(file_path):
             else:
                 if not multiline_code and line.startswith("```"):
                     multiline_code = True
+                    multiline_code_first_line = True
                     line = line[3:]
                     line = code_block_start(line)
+                    if question_state:
+                        Q += line
+                    else:
+                        A_list[previous_answer_state] += line
+                    continue
                 elif not multiline_code and line.startswith('"```'):
                     multiline_code = True
+                    multiline_code_first_line = True
                     line = line[4:]
                     line = code_block_start(line)
-                if not multiline_code and not multiline_equation:
-                    line = all_inline_format(line)
-                    # 行内公式处理，多行里不处理行间公式
-                    line = inline_equation(line)
+                    if question_state:
+                        Q += line
+                    else:
+                        A_list[previous_answer_state] += line
+                    continue
                 if question_state:
                     # 此时在问题区，但在多行里
                     if multiline_code:
                         if line.endswith("```"):
-                            Q += "\n" + html.escape(line[:-3]) + "</pre></code>"
+                            if multiline_code_first_line:
+                                Q += html.escape(line[:-3]) + "</pre></code>"
+                                multiline_code_first_line = False
+                            else:
+                                Q += "\n" + html.escape(line[:-3]) + "</pre></code>"
                             multiline_code = False
                         else:
-                            Q += "\n" + html.escape(line)
+                            if multiline_code_first_line:
+                                Q += html.escape(line)
+                                multiline_code_first_line = False
+                            else:
+                                Q += "\n" + html.escape(line)
                     elif multiline_code:
                         if line.endswith('```"'):
-                            Q += "\n" + html.escape(line[:-4]) + "</pre></code>"
+                            if multiline_code_first_line:
+                                Q += html.escape(line[:-4]) + "</pre></code>"
+                                multiline_code_first_line = False
+                            else:
+                                Q += "\n" + html.escape(line[:-4]) + "</pre></code>"
                             multiline_code = False
                         else:
-                            Q += "\n" + html.escape(line)
+                            if multiline_code_first_line:
+                                Q += html.escape(line)
+                                multiline_code_first_line = False
+                            else:
+                                Q += "\n" + html.escape(line)
                     elif multiline_equation:
                         if line.endswith("$$"):
                             multiline_equation = False
@@ -383,6 +413,10 @@ def main(file_path):
                         else:
                             Q += "<br>" + html.escape(line)
                     else:
+                        # 行内公式处理，多行里不处理行间公式
+                        line = inline_equation(line)
+                        line = html.escape(line)
+                        line = all_inline_format(line)
                         if h1:
                             Q += "<br>" + html.escape(line[:-5]) + "</h1>"
                         elif h2:
@@ -397,13 +431,25 @@ def main(file_path):
                     # 多行代码，匹配结束与中间
                     if multiline_code:
                         if line.endswith("```"):
-                            A_list[previous_answer_state] += "\n" + html.escape(line[:-3]) + "</pre></code></li>"
+                            if multiline_code_first_line:
+                                A_list[previous_answer_state] += html.escape(line[:-3]) + "</pre></code></li>"
+                                multiline_code_first_line = False
+                            else:
+                                A_list[previous_answer_state] += "\n" + html.escape(line[:-3]) + "</pre></code></li>"
                             multiline_code = False
                         elif line.endswith('```"'):
-                            A_list[previous_answer_state] += "\n" + html.escape(line[:-4]) + "</pre></code></li>"
+                            if multiline_code_first_line:
+                                A_list[previous_answer_state] += html.escape(line[:-4]) + "</pre></code></li>"
+                                multiline_code_first_line = False
+                            else:
+                                A_list[previous_answer_state] += "\n" + html.escape(line[:-4]) + "</pre></code></li>"
                             multiline_code = False
                         else:
-                            A_list[previous_answer_state] += "\n" + html.escape(line)
+                            if multiline_code_first_line:
+                                A_list[previous_answer_state] += html.escape(line)
+                                multiline_code_first_line = False
+                            else:
+                                A_list[previous_answer_state] += "\n" + html.escape(line)
                         continue
                     # 多行行间公式匹配结束
                     elif multiline_equation:
@@ -413,12 +459,17 @@ def main(file_path):
                         elif line.endswith('$$"'):
                             multiline_equation = False
                             line = html.escape(line[:-3]) + "\\]"
+                    else:
+                        # 行内公式处理，多行里不处理行间公式
+                        line = inline_equation(line)
+                        line = html.escape(line)
+                        line = all_inline_format(line)
                     if A_list[previous_answer_state].endswith("</li>"):
                         A_list[previous_answer_state] = A_list[previous_answer_state][:-5]
                         if h1 or h2 or h3:
                             A_list[previous_answer_state] = A_list[previous_answer_state][:-5]
                         A_list[previous_answer_state] += "<br>"
-                        A_list[previous_answer_state] += html.escape(line)
+                        A_list[previous_answer_state] += line
                         if h1:
                             A_list[previous_answer_state] += "</h1>"
                         elif h2:
@@ -442,7 +493,7 @@ def print_help_and_exit():
 
 
 if __name__ == '__main__':
-    # main("example/escape.txt")
+    # main("example/all.txt")
     # exit(0)
     path = ""
     if len(sys.argv) == 2:
