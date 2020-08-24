@@ -1,0 +1,3 @@
+Q:vetor的头文件和定义和特点是什么？	"<ul>
+<li>头文件：&lt;vector&gt;</li><li>定义：vector&lt;typename&gt; name</li><li>typename可以为基本类型，也可以为STL标准容器</li><li>特点：变长数组</li>
+</ul>"

@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import html
 import pandas as pd
 
 codename_set = {"clojure", "css", "javascript", "html"}
@@ -234,20 +235,20 @@ def main(file_path):
                     multiline_code = True
                     line = line[3:]
                     line = code_block_start(line)
-                    Q += line
+                    Q += html.escape(line)
                 elif line.startswith('"```'):
                     multiline_code = True
                     line = line[4:]
                     line = code_block_start(line)
-                    Q += line
+                    Q += html.escape(line)
                 elif line.startswith("$$") and "$$" not in line[2:]:
                     # 多行行间公式匹配开始
                     multiline_equation = True
-                    Q += "\\[" + line[2:]
+                    Q += "\\[" + html.escape(line[2:])
                 elif line.startswith('"$$') and "$$" not in line[3:]:
                     # 带引用的多行行间公式匹配开始
                     multiline_equation = True
-                    Q += "\\[" + line[3:]
+                    Q += "\\[" + html.escape(line[3:])
                 else:
                     # 仅在非代码块时匹配行内格式
                     line = all_inline_format(line)
@@ -256,16 +257,16 @@ def main(file_path):
                     if question_state:
                         Q += "<br>"
                     if line.startswith("# "):
-                        Q += "<h1>" + line[2:] + "</h1>"
+                        Q += "<h1>" + html.escape(line[2:]) + "</h1>"
                         h1 = True
                     elif line.startswith("## "):
-                        Q += "<h2>" + line[3:] + "</h2>"
+                        Q += "<h2>" + html.escape(line[3:]) + "</h2>"
                         h2 = True
                     elif line.startswith("### "):
-                        Q += "<h3>" + line[4:] + "</h3>"
+                        Q += "<h3>" + html.escape(line[4:]) + "</h3>"
                         h3 = True
                     else:
-                        Q += line
+                        Q += html.escape(line)
                 question_state = True
                 current_answer_state = 0
                 previous_answer_state = 0
@@ -291,32 +292,36 @@ def main(file_path):
                 if line.startswith("```"):
                     multiline_code = True
                     line = line[3:]
-                    line = code_block_start(line)
+                    line = html.escape(code_block_start(line))
                 elif line.startswith('"```'):
                     multiline_code = True
                     line = line[4:]
-                    line = code_block_start(line)
+                    line = html.escape(code_block_start(line))
                 elif line.startswith("$$") and "$$" not in line[2:]:
                     # 多行行间公式匹配开始
                     multiline_equation = True
-                    line = "\\[" + line[2:]
+                    line = "\\[" + html.escape(line[2:])
                 elif line.startswith('"$$') and "$$" not in line[3:]:
                     # 带引用的多行行间公式匹配开始
                     multiline_equation = True
-                    line = "\\[" + line[3:]
+                    line = "\\[" + html.escape(line[3:])
                 elif not multiline_code and not multiline_equation:
                     # 仅在非多行公式和非多行代码才匹配所有行内格式
                     line = all_inline_format(line)
                     line = inline_equation(line)
                     if line.startswith("# "):
-                        line = "<h1>" + line[2:] + "</h1>"
+                        line = "<h1>" + html.escape(line[2:]) + "</h1>"
                         h1 = True
                     elif line.startswith("## "):
-                        line = "<h2>" + line[3:] + "</h2>"
+                        line = "<h2>" + html.escape(line[3:]) + "</h2>"
                         h2 = True
                     elif line.startswith("### "):
-                        line = "<h3>" + line[4:] + "</h3>"
+                        line = "<h3>" + html.escape(line[4:]) + "</h3>"
                         h3 = True
+                    else:
+                        line = html.escape(line)
+                else:
+                    line = html.escape(line)
 
                 if current_answer_state > previous_answer_state:
                     # 每上升一级时，在当前级别更新列表
@@ -358,62 +363,62 @@ def main(file_path):
                     # 此时在问题区，但在多行里
                     if multiline_code:
                         if line.endswith("```"):
-                            Q += "\n" + line[:-3] + "</pre></code>"
+                            Q += "\n" + html.escape(line[:-3]) + "</pre></code>"
                             multiline_code = False
                         else:
-                            Q += "\n" + line
+                            Q += "\n" + html.escape(line)
                     elif multiline_code:
                         if line.endswith('```"'):
-                            Q += "\n" + line[:-4] + "</pre></code>"
+                            Q += "\n" + html.escape(line[:-4]) + "</pre></code>"
                             multiline_code = False
                         else:
-                            Q += "\n" + line
+                            Q += "\n" + html.escape(line)
                     elif multiline_equation:
                         if line.endswith("$$"):
                             multiline_equation = False
-                            Q += line[:-2] + "\\]"
+                            Q += html.escape(line[:-2]) + "\\]"
                         elif line.endswith('$$"'):
                             multiline_equation = False
-                            Q += line[:-3] + "\\]"
+                            Q += html.escape(line[:-3]) + "\\]"
                         else:
-                            Q += "<br>" + line
+                            Q += "<br>" + html.escape(line)
                     else:
                         if h1:
-                            Q += "<br>" + line[:-5] + "</h1>"
+                            Q += "<br>" + html.escape(line[:-5]) + "</h1>"
                         elif h2:
-                            Q += "<br>" + line[:-5] + "</h2>"
+                            Q += "<br>" + html.escape(line[:-5]) + "</h2>"
                         elif h3:
-                            Q += "<br>" + line[:-5] + "</h3>"
+                            Q += "<br>" + html.escape(line[:-5]) + "</h3>"
                         else:
-                            Q += "<br>" + line
+                            Q += "<br>" + html.escape(line)
                 else:
                     # 检测到处于0级时，此时是处于previous级答案中，但是在多行里
 
                     # 多行代码，匹配结束与中间
                     if multiline_code:
                         if line.endswith("```"):
-                            A_list[previous_answer_state] += "\n" + line[:-3] + "</pre></code></li>"
+                            A_list[previous_answer_state] += "\n" + html.escape(line[:-3]) + "</pre></code></li>"
                             multiline_code = False
                         elif line.endswith('```"'):
-                            A_list[previous_answer_state] += "\n" + line[:-4] + "</pre></code></li>"
+                            A_list[previous_answer_state] += "\n" + html.escape(line[:-4]) + "</pre></code></li>"
                             multiline_code = False
                         else:
-                            A_list[previous_answer_state] += "\n" + line
+                            A_list[previous_answer_state] += "\n" + html.escape(line)
                         continue
                     # 多行行间公式匹配结束
                     elif multiline_equation:
                         if line.endswith("$$"):
                             multiline_equation = False
-                            line = line[:-2] + "\\]"
+                            line = html.escape(line[:-2]) + "\\]"
                         elif line.endswith('$$"'):
                             multiline_equation = False
-                            line = line[:-3] + "\\]"
+                            line = html.escape(line[:-3]) + "\\]"
                     if A_list[previous_answer_state].endswith("</li>"):
                         A_list[previous_answer_state] = A_list[previous_answer_state][:-5]
                         if h1 or h2 or h3:
                             A_list[previous_answer_state] = A_list[previous_answer_state][:-5]
                         A_list[previous_answer_state] += "<br>"
-                        A_list[previous_answer_state] += line
+                        A_list[previous_answer_state] += html.escape(line)
                         if h1:
                             A_list[previous_answer_state] += "</h1>"
                         elif h2:
@@ -437,7 +442,7 @@ def print_help_and_exit():
 
 
 if __name__ == '__main__':
-    # main("example/1q1a.txt")
+    # main("example/escape.txt")
     # exit(0)
     path = ""
     if len(sys.argv) == 2:
