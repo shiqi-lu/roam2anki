@@ -459,6 +459,8 @@ def main(file_path):
                         elif line.endswith('$$"'):
                             multiline_equation = False
                             line = html.escape(line[:-3]) + "\\]"
+                        else:
+                            line = html.escape(line)
                     else:
                         # 行内公式处理，多行里不处理行间公式
                         line = inline_equation(line)
