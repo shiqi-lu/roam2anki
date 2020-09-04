@@ -20,12 +20,12 @@ STRIKETHROUGHT_PATTERN = r"~~(.*?)~~"
 HIGHLIGHT_PATTERN = r"\^\^(.*?)\^\^"
 INLINECODE_PATTERN = r"`(.+?)`"
 INLINE_EQUATION_PATTERN = r"\$\$(.*?)\$\$"
+ALIAS_PATTERN = r"{{alias:\s*\[\[.*\]\]\s*(.*?)}}"
 
 # 强制选择代码格式：
-# none表示不选，为空
 # inherit表示直接继承自```后面定义的
 # 其它的都强制写入
-codeblock_format = ""
+codeblock_format = "inherit"
 
 
 def detect_answer_state(line, answer_state_prefix):
@@ -60,12 +60,11 @@ def inline_equation1(line):
     res = re.findall(INLINE_EQUATION_PATTERN, line)
     if not res:
         return line
-    newline = line
     while len(res) > 0:
         html = "\(" + res[0] + "\)"
-        newline = re.sub(INLINE_EQUATION_PATTERN, html, newline, count=1)
-        res = re.findall(INLINE_EQUATION_PATTERN, newline)
-    return newline
+        line = re.sub(INLINE_EQUATION_PATTERN, html, line, count=1)
+        res = re.findall(INLINE_EQUATION_PATTERN, line)
+    return line
 
 
 def inline_equation(line):
@@ -86,11 +85,10 @@ def remove_double_square_bracket(line):
     res = re.findall(DOUBLE_SQUARE_BRACKET_PATTERN, line)
     if not res:
         return line
-    newline = line
     while len(res) > 0:
-        newline = re.sub(DOUBLE_SQUARE_BRACKET_PATTERN, res[0], newline, count=1)
-        res = re.findall(DOUBLE_SQUARE_BRACKET_PATTERN, newline)
-    return newline
+        line = re.sub(DOUBLE_SQUARE_BRACKET_PATTERN, res[0], line, count=1)
+        res = re.findall(DOUBLE_SQUARE_BRACKET_PATTERN, line)
+    return line
 
 
 def img(line):
@@ -110,26 +108,34 @@ def hyperlink(line):
     res = re.findall(HYPERLINK_PATTERN, line)
     if not res:
         return line
-    newline = line
     while len(res) > 0:
         text, url = res[0]
         html = f'<a href="{url}">{text}</a>'
-        newline = re.sub(HYPERLINK_PATTERN, html, newline, count=1)
-        res = re.findall(HYPERLINK_PATTERN, newline)
-    return newline
+        line = re.sub(HYPERLINK_PATTERN, html, line, count=1)
+        res = re.findall(HYPERLINK_PATTERN, line)
+    return line
+
+
+def alias(line):
+    res = re.findall(ALIAS_PATTERN, line)
+    if not res:
+        return line
+    while len(res) > 0:
+        line = re.sub(ALIAS_PATTERN, res[0], line, count=1)
+        res = re.findall(ALIAS_PATTERN, line)
+    return line
 
 
 def basic_inline_format(line, PATTERN, style_name):
     res = re.findall(PATTERN, line)
     if not res:
         return line
-    newline = line
     while len(res) > 0:
         content = res[0]
         html = f'<span class="{style_name}">{content}</span>'
-        newline = re.sub(PATTERN, html, newline, count=1)
-        res = re.findall(PATTERN, newline)
-    return newline
+        line = re.sub(PATTERN, html, line, count=1)
+        res = re.findall(PATTERN, line)
+    return line
 
 
 def bold(line):
@@ -153,28 +159,18 @@ def italics(line):
 
 
 def all_inline_format(line):
-    return remove_double_square_bracket(italics(inlinecode(strikestrough(highlight(bold(hyperlink(img(line))))))))
+    return alias(remove_double_square_bracket(
+        italics(inlinecode(strikestrough(highlight(bold(hyperlink(img(line)))))))))
 
 
 def code_block_start(line):
-    # todo: 验证一下是否所有的代码块的```后都紧跟着代码名字，如果是就直接解析
-    codename = ""
-    for code in codename_set:
-        if line.startswith(code):
-            line = line[len(code):]
-            codename = code
-            break
+    codename = line.strip()
     html_start = ""
-    if not codeblock_format:
-        html_start = "<pre><code>"
-    elif codeblock_format == "inherit":
-        if codename:
-            html_start = f'<pre><code class="{codename}">'
-        else:
-            html_start = "<pre><code>"
+    if codeblock_format == "inherit":
+        html_start = f'<pre><code class="{codename}">'
     else:
         html_start = f'<pre><code class="{codeblock_format}">'
-    return html_start + html.escape(line)
+    return html_start
 
 
 def is_A_empty(A):
@@ -490,32 +486,29 @@ def main(file_path):
 
 
 def print_help_and_exit():
-    print("Usage: python roam2anki.py FILE/DIR [codeformat]")
+    print("Usage: python roam2anki.py FILE/DIR ...")
     exit(1)
 
 
 if __name__ == '__main__':
     # main("example/all.txt")
     # exit(0)
-    path = ""
-    if len(sys.argv) == 2:
-        path = sys.argv[1]
-    elif len(sys.argv) == 3:
-        path = sys.argv[1]
-        codeblock_format = sys.argv[2]
-    else:
+    if len(sys.argv) == 1:
         print_help_and_exit()
 
-    if not os.path.exists(path):
-        print_help_and_exit()
-    if os.path.isfile(path):
-        if not path.endswith(".txt"):
+    for path in sys.argv:
+        if not os.path.exists(path):
+            print(path, "not exists")
             print_help_and_exit()
-        main(path)
-    elif os.path.isdir(path):
-        for filename in os.listdir(path):
-            full_path = os.path.join(path, filename)
-            if os.path.isfile(full_path) and full_path.endswith(".txt"):
-                main(full_path)
-    else:
-        print_help_and_exit()
+        if os.path.isfile(path):
+            if not path.endswith(".txt"):
+                print_help_and_exit()
+            main(path)
+        elif os.path.isdir(path):
+            for filename in os.listdir(path):
+                full_path = os.path.join(path, filename)
+                if os.path.isfile(full_path) and full_path.endswith(".txt"):
+                    main(full_path)
+        else:
+            print(path, "not exists")
+            print_help_and_exit()

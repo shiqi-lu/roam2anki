@@ -40,6 +40,9 @@ roam2anki用来把roam的笔记转成anki进行记忆
 * [x] 支持引用的行间公式和代码块
 * [x] 问题区把连续的一级块组合成同一个问题
 * [x] 涉及到html的<、>、&、"等字符放到anki前进行转义，保证所有字符都能显示
+* [] 图片样式居中
+* [x] 代码块样式的直接继承
+* [x] alias的支持
 
 # 限制
 - 答案和问题的代码块必须要新起一个块或块内新起一行，且这一行必须以3个反引号开始，即不支持代码块放在一行中间，原因是难以解析，且代码块展示就是会新起一行，就人工新起一行吧
@@ -47,7 +50,9 @@ roam2anki用来把roam的笔记转成anki进行记忆
 
 # 其它说明
 - roam2anki只支持语法正确时的解析，即保证在roam中能正确解析的，导出anki后也正确解析，不正确的语法，或故意为难解析器的，，我也没办法哇
-- roam2anki使用python3.7写成，仅使用了pandas库，若没有安装pandas，运行`pip install pandas`即可 
-- roam2anki.py提供了批量转换的方法，第二个选项`python roam2anki.py example`，若example为一个文件夹，会寻找example下的所有以.txt结尾的文件进行转换
-- 目前roam支持的代码块中高亮格式非常有限，只有css、html、clojure、javascript四种，所以roam2anki.py中提供了一个选项，可以强制更改代码块的高亮语法，即`python roam2anki.py example/code.txt python`，在程序后面新增一个字段，如python，cpp，java等，可以设定导出的anki卡片中的代码高亮语法规则
+- roam2anki.py提供了批量转换的方法，第二个选项`python roam2anki.py example ...`，若example为一个文件夹，会寻找example下的所有以.txt结尾的文件进行转换，后续可接多个文件或文件夹
 - roam2anki目前是作者写给自用，若使用过程中发现有解析出来的bug，请提一个issue
+
+# 依赖
+python >= 3.7
+pandas >= 1.0.1
