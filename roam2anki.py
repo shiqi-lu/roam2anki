@@ -12,7 +12,7 @@ answer_state_prefix = ["", " " * 4 + "- ", " " * 8 + "- ", " " * 12 + "- ", " " 
                        " " * 24 + "- ", " " * 28 + "- ", " " * 32 + "- ", " " * 36 + "- ", " " * 40 + "- ", ]
 
 DOUBLE_SQUARE_BRACKET_PATTERN = r"\[\[(.*?)\]\]"
-IMG_PATTERN = r"!\[(.*?)\]\((.+?)\)"
+IMG_PATTERN = r'"?!\[(.*?)\]\((.+?)\)"?'
 HYPERLINK_PATTERN = r"\[(.+?)\]\((.+?)\)"
 BOLD_PATTERN = r"\*\*(.*?)\*\*"
 ITALICS_PATTERN = r"__(.*?)__"
@@ -98,7 +98,7 @@ def img(line):
     newline = line
     while len(res) > 0:
         alt, src = res[0]
-        html = f'<img src="{src}", alt="{alt}">'
+        html = f'<div style="text-align: center;"><img src="{src}", alt="{alt}"></div>'
         newline = re.sub(IMG_PATTERN, html, newline, count=1)
         res = re.findall(IMG_PATTERN, newline)
     return newline
