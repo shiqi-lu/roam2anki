@@ -47,3 +47,9 @@ int main() {
     int u, v, w;
     return 0;
 }```
+    - "```c++
+#include <cstdio>
+int main() {
+    int u, v, w;
+    return 0;
+}```"

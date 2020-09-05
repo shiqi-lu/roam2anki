@@ -10,7 +10,7 @@ answer_state_prefix = ["", " " * 4 + "- ", " " * 8 + "- ", " " * 12 + "- ", " " 
                        " " * 24 + "- ", " " * 28 + "- ", " " * 32 + "- ", " " * 36 + "- ", " " * 40 + "- ", ]
 
 DOUBLE_SQUARE_BRACKET_PATTERN = r"\[\[(.*?)\]\]"
-IMG_PATTERN = r'"?!\[(.*?)\]\((.+?)\)"?'
+IMG_PATTERN = r'(&quot;)?!\[(.*?)\]\((.+?)\)(&quot;)?'
 HYPERLINK_PATTERN = r"\[(.+?)\]\((.+?)\)"
 BOLD_PATTERN = r"\*\*(.*?)\*\*"
 ITALICS_PATTERN = r"__(.*?)__"
@@ -93,13 +93,11 @@ def img(line):
     res = re.findall(IMG_PATTERN, line)
     if not res:
         return line
-    newline = line
     while len(res) > 0:
-        alt, src = res[0]
-        html = f'<div style="text-align: center;"><img src="{src}", alt="{alt}"></div>'
-        newline = re.sub(IMG_PATTERN, html, newline, count=1)
-        res = re.findall(IMG_PATTERN, newline)
-    return newline
+        html = f'<div style="text-align: center;"><img src="{res[0][2]}", alt="{res[0][1]}"></div>'
+        line = re.sub(IMG_PATTERN, html, line, count=1)
+        res = re.findall(IMG_PATTERN, line)
+    return line
 
 
 def hyperlink(line):
@@ -234,14 +232,12 @@ def main(file_path):
                     multiline_code = True
                     multiline_code_first_line = True
                     line = line[3:]
-                    line = code_block_start(line)
-                    Q += html.escape(line)
+                    Q += code_block_start(line)
                 elif line.startswith('"```'):
                     multiline_code = True
                     multiline_code_first_line = True
                     line = line[4:]
-                    line = code_block_start(line)
-                    Q += html.escape(line)
+                    Q += code_block_start(line)
                 elif line.startswith("$$") and "$$" not in line[2:]:
                     # 多行行间公式匹配开始
                     multiline_equation = True
@@ -381,14 +377,7 @@ def main(file_path):
                             else:
                                 Q += "\n" + html.escape(line[:-3]) + "</pre></code>"
                             multiline_code = False
-                        else:
-                            if multiline_code_first_line:
-                                Q += html.escape(line)
-                                multiline_code_first_line = False
-                            else:
-                                Q += "\n" + html.escape(line)
-                    elif multiline_code:
-                        if line.endswith('```"'):
+                        elif line.endswith('```"'):
                             if multiline_code_first_line:
                                 Q += html.escape(line[:-4]) + "</pre></code>"
                                 multiline_code_first_line = False
@@ -411,8 +400,8 @@ def main(file_path):
                         else:
                             Q += "<br>" + html.escape(line)
                     else:
-                        # 行内公式处理，多行里不处理行间公式
-                        line = inline_equation(line)
+                        # 行内公式处理
+                        line = inline_equation(block_equation(line))
                         line = html.escape(line)
                         line = all_inline_format(line)
                         if h1:
@@ -460,8 +449,8 @@ def main(file_path):
                         else:
                             line = html.escape(line)
                     else:
-                        # 行内公式处理，多行里不处理行间公式
-                        line = inline_equation(line)
+                        # 行内公式处理
+                        line = inline_equation(block_equation(line))
                         line = html.escape(line)
                         line = all_inline_format(line)
                     if A_list[previous_answer_state].endswith("</li>"):
@@ -493,7 +482,7 @@ def print_help_and_exit():
 
 
 if __name__ == '__main__':
-    # main("example/qcode.txt")
+    # main("example/example.txt")
     # exit(0)
     if len(sys.argv) == 1:
         print_help_and_exit()
