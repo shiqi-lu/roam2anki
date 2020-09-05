@@ -4,8 +4,6 @@ import re
 import html
 import pandas as pd
 
-codename_set = {"clojure", "css", "javascript", "html"}
-
 question_prefix = "- "
 prefix_length = [0, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42]
 answer_state_prefix = ["", " " * 4 + "- ", " " * 8 + "- ", " " * 12 + "- ", " " * 16 + "- ", " " * 20 + "- ",
@@ -159,7 +157,7 @@ def italics(line):
 
 
 def all_inline_format(line):
-    return alias(remove_double_square_bracket(
+    return remove_double_square_bracket(alias(
         italics(inlinecode(strikestrough(highlight(bold(hyperlink(img(line)))))))))
 
 
@@ -491,12 +489,12 @@ def print_help_and_exit():
 
 
 if __name__ == '__main__':
-    # main("example/all.txt")
+    # main("example/qcode.txt")
     # exit(0)
     if len(sys.argv) == 1:
         print_help_and_exit()
 
-    for path in sys.argv:
+    for path in sys.argv[1:]:
         if not os.path.exists(path):
             print(path, "not exists")
             print_help_and_exit()
