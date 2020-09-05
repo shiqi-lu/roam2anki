@@ -228,6 +228,8 @@ def main(file_path):
                 h2 = False
                 h3 = False
                 line = line[len(question_prefix):]
+                if not line.strip():
+                    continue
                 if line.startswith("```"):
                     multiline_code = True
                     multiline_code_first_line = True
@@ -282,6 +284,8 @@ def main(file_path):
                     question_state = False
                 # 去掉答案开头的多级格式
                 line = line[prefix_length[current_answer_state]:]
+                if not line.strip():
+                    continue
                 # 答案区行内，多行开始处理
 
                 # 行间公式处理
