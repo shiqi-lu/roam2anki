@@ -35,5 +35,5 @@ roam2anki用来把Roam Research的笔记转成anki进行记忆
 - roam2anki目前是作者写给自用，若使用过程中发现有解析出来的bug，请提一个issue
 
 # 依赖
-python >= 3.7
-pandas >= 1.0.1
+- python >= 3.7
+- pandas >= 1.0.1
