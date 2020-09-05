@@ -1,0 +1,49 @@
+- Q:测试：所有**样式**和^^多级^^内容，alias和删除双方括号，超链接，
+问题块^^第二^^行内容，还有html转义内容，还有h1~h3的样式
+    - **加粗**和__斜体__和~~删字符~~
+答案块__第二__行内容
+        - ^^高亮^^和`行内代码`
+            - # 再来<一级>
+                - {{alias:  [[逻辑回归]]  Logistic回归}}
+                    - ## "还"不够吗[[卷积神经网络]]
+            - ok的[douban信条](https://movie.douban.com/subject/30444960/?from=showing)
+        - ### 没问题
+- Q:行内公式行间公式多行公式测试，$$V_i(0\leqslant i \leqslant n - 1)$$
+第二行$$V_i(0\leqslant i \leqslant n - 1)$$
+"$$w^{*}=\sum_{i=1}^{N} \alpha_{i}^{*} y_{i} x_{i}$$"
+
+- "$$\begin{array}{ll}
+\underset{x \in \mathbf{R}^{n}}{\min} & f(x) \\
+\text { s.t. } & c_{i}(x) \leqslant 0, \quad i=1,2, \cdots, k \\
+& h_{j}(x)=0, \quad j=1,2, \cdots, l
+\end{array}$$"
+    - $$w^{*}=\sum_{i=1}^{N} \alpha_{i}^{*} y_{i} x_{i}$$
+    - $$\begin{array}{ll}
+\underset{x \in \mathbf{R}^{n}}{\min} & f(x) \\
+\text { s.t. } & c_{i}(x) \leqslant 0, \quad i=1,2, \cdots, k \\
+& h_{j}(x)=0, \quad j=1,2, \cdots, l
+\end{array}$$
+- Q:图片测试：问题区行内"![](http://anki190912.xuexihaike.com/20200905195635.png?imageView2/2/w/250)"图片
+问题区行间图片引用
+"![](http://anki190912.xuexihaike.com/20200905195635.png?imageView2/2/w/250)"
+    - ![](http://anki190912.xuexihaike.com/20200905195635.png?imageView2/2/w/250)
+- Q:多行代码块测试
+```c++
+struct fruit {
+    string name;
+    int price;
+}```
+好的
+- 这是续着上个问题的
+- ```c++
+struct cmp {
+    bool operator() (fruit f1, fruit f2) {
+        return f1.price > fruit.f2;
+    }
+}```
+    - ```c++
+#include <cstdio>
+int main() {
+    int u, v, w;
+    return 0;
+}```
