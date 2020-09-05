@@ -1,0 +1,35 @@
+"Q:测试：所有<span class=""bold"">样式</span>和<span class=""highlight"">多级</span>内容，alias和删除双方括号，超链接，<br>问题块<span class=""highlight"">第二</span>行内容，还有html转义内容，还有h1~h3的样式"	"<ul>
+<li><span class=""bold"">加粗</span>和<span class=""italic"">斜体</span>和<span class=""strikethrough"">删字符</span><br>答案&amp;&amp;块<span class=""italic"">第二</span>行内容</li><ul>
+<li><span class=""highlight"">高亮</span>和<span class=""inlinecode"">行内代码</span></li><ul>
+<li><h1>再来&lt;一级&gt;</h1></li><ul>
+<li>Logistic回归</li><ul>
+<li><h2>&quot;还&quot;不够吗卷积神经网络</h2></li>
+</ul>
+</ul><li>ok的<a href=""https://movie.douban.com/subject/30444960/?from=showing"">douban信条</a></li>
+</ul><li><h3>没问题</h3></li>
+</ul>
+</ul>"
+Q:行内公式行间公式多行公式测试，\(V_i(0\leqslant i \leqslant n - 1)\)<br>第二行\(V_i(0\leqslant i \leqslant n - 1)\)<br>\[w^{*}=\sum_{i=1}^{N} \alpha_{i}^{*} y_{i} x_{i}\]\[\begin{array}{ll}<br>\underset{x \in \mathbf{R}^{n}}{\min} &amp; f(x) \\<br>\text { s.t. } &amp; c_{i}(x) \leqslant 0, \quad i=1,2, \cdots, k \\<br>&amp; h_{j}(x)=0, \quad j=1,2, \cdots, l\end{array}\]	"<ul>
+<li>\[w^{*}=\sum_{i=1}^{N} \alpha_{i}^{*} y_{i} x_{i}\]</li><li>\[\begin{array}{ll}<br>\underset{x \in \mathbf{R}^{n}}{\min} &amp; f(x) \\<br>\text { s.t. } &amp; c_{i}(x) \leqslant 0, \quad i=1,2, \cdots, k \\<br>&amp; h_{j}(x)=0, \quad j=1,2, \cdots, l<br>\end{array}\]</li>
+</ul>"
+"Q:图片测试：问题区行内<div style=""text-align: center;""><img src=""http://anki190912.xuexihaike.com/20200905195635.png?imageView2/2/w/250"", alt=""""></div>图片<br>问题区行间图片引用<br><div style=""text-align: center;""><img src=""http://anki190912.xuexihaike.com/20200905195635.png?imageView2/2/w/250"", alt=""""></div>"	"<ul>
+<li><div style=""text-align: center;""><img src=""http://anki190912.xuexihaike.com/20200905195635.png?imageView2/2/w/250"", alt=""""></div></li>
+</ul>"
+"Q:多行代码块测试<pre><code class=""c++"">struct fruit {
+    string name;
+    int price;
+}</pre></code><br>好的<br>这是续着上个问题的<pre><code class=""c++"">struct cmp {
+    bool operator() (fruit f1, fruit f2) {
+        return f1.price &gt; fruit.f2;
+    }
+}</pre></code>"	"<ul>
+<li><pre><code class=""c++"">#include &lt;cstdio&gt;
+int main() {
+    int u, v, w;
+    return 0;
+}</pre></code></li><li><pre><code class=""c++"">#include &lt;cstdio&gt;
+int main() {
+    int u, v, w;
+    return 0;
+}</pre></code></li>
+</ul>"
