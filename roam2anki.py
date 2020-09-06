@@ -367,6 +367,24 @@ def main(file_path):
                     else:
                         A_list[previous_answer_state] += line
                     continue
+                elif not multiline_equation and line.startswith("$$") and "$$" not in line[2:]:
+                    # 多行行间公式匹配开始
+                    multiline_equation = True
+                    line = "\\[" + html.escape(line[2:])
+                    if question_state:
+                        Q += line
+                    else:
+                        A_list[previous_answer_state] += line
+                    continue
+                elif not multiline_equation and line.startswith('"$$') and "$$" not in line[3:]:
+                    # 带引用的多行行间公式匹配开始
+                    multiline_equation = True
+                    line = "\\[" + html.escape(line[3:])
+                    if question_state:
+                        Q += line
+                    else:
+                        A_list[previous_answer_state] += line
+                    continue
                 if question_state:
                     # 此时在问题区，但在多行里
                     if multiline_code:

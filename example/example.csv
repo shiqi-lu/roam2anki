@@ -9,7 +9,7 @@
 </ul><li><h3>没问题</h3></li>
 </ul>
 </ul>"
-Q:行内公式行间公式多行公式测试，\(V_i(0\leqslant i \leqslant n - 1)\)<br>第二行\(V_i(0\leqslant i \leqslant n - 1)\)<br>\[w^{*}=\sum_{i=1}^{N} \alpha_{i}^{*} y_{i} x_{i}\]\[\begin{array}{ll}<br>\underset{x \in \mathbf{R}^{n}}{\min} &amp; f(x) \\<br>\text { s.t. } &amp; c_{i}(x) \leqslant 0, \quad i=1,2, \cdots, k \\<br>&amp; h_{j}(x)=0, \quad j=1,2, \cdots, l\end{array}\]	"<ul>
+Q:行内公式行间公式多行公式测试，\(V_i(0\leqslant i \leqslant n - 1)\)<br>第二行\(V_i(0\leqslant i \leqslant n - 1)\)<br>\[w^{*}=\sum_{i=1}^{N} \alpha_{i}^{*} y_{i} x_{i}\]\[\begin{array}{ll}<br>\underset{x \in \mathbf{R}^{n}}{\min} &amp; f(x) \\<br>\text { s.t. } &amp; c_{i}(x) \leqslant 0, \quad i=1,2, \cdots, k \\<br>&amp; h_{j}(x)=0, \quad j=1,2, \cdots, l\end{array}\]\[\begin{array}{ll}<br>\underset{x \in \mathbf{R}^{n}}{\min} &amp; f(x) \\<br>\text { s.t. } &amp; c_{i}(x) \leqslant 0, \quad i=1,2, \cdots, k \\<br>&amp; h_{j}(x)=0, \quad j=1,2, \cdots, l\end{array}\]	"<ul>
 <li>\[w^{*}=\sum_{i=1}^{N} \alpha_{i}^{*} y_{i} x_{i}\]</li><li>\[\begin{array}{ll}<br>\underset{x \in \mathbf{R}^{n}}{\min} &amp; f(x) \\<br>\text { s.t. } &amp; c_{i}(x) \leqslant 0, \quad i=1,2, \cdots, k \\<br>&amp; h_{j}(x)=0, \quad j=1,2, \cdots, l<br>\end{array}\]</li>
 </ul>"
 "Q:图片测试：问题区行内<div style=""text-align: center;""><img src=""http://anki190912.xuexihaike.com/20200905195635.png?imageView2/2/w/250"", alt=""""></div>图片<br>问题区行间图片引用<br><div style=""text-align: center;""><img src=""http://anki190912.xuexihaike.com/20200905195635.png?imageView2/2/w/250"", alt=""""></div>"	"<ul>
