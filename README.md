@@ -11,6 +11,8 @@ roam2anki用来把Roam Research的笔记转成anki进行记忆
 4. 运行python脚本`python roam2anki.py example.txt`，程序把转换成对应的只有两列的csv文件，问题是第一列，回答是第二列
 5. 把csv导入到anki中，保持默认设置即可。即fields separated by: Tab；勾选上Allow HTML in fields；Field 1为正面；field 2为背面
 
+![](img.jpeg)
+
 # 功能列表
 * [x] 支持所有样式：加粗、斜体、高亮、删字符、行内代码、超链接
 * [x] 支持图片并居中，支持引用图片
