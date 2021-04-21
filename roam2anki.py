@@ -493,6 +493,19 @@ def main(file_path):
     # print(output)
     output.to_csv(output_path, sep='\t', header=False, index=False)
 
+    # 因为一行开头如果是#那么导入的时候会被忽略，所以，不想改源代码了，
+    # 以后有空用有限状态机改一波，现在直接操作文件，在#开头的前面加个空格吧
+    fr = open(output_path, "r")
+    fw = open(f"{output_path}.csv", "w")
+    for line in fr.readlines():
+        if line.startswith("#"):
+            line = " " + line
+        fw.write(line)
+
+    fr.close()
+    fw.close()
+    os.rename(f"{output_path}.csv", output_path)
+
 
 def print_help_and_exit():
     print("Usage: python roam2anki.py FILE/DIR ...")
