@@ -233,19 +233,10 @@ def main(file_path):
                     multiline_code_first_line = True
                     line = line[3:]
                     Q += code_block_start(line)
-                elif line.startswith('"```'):
-                    multiline_code = True
-                    multiline_code_first_line = True
-                    line = line[4:]
-                    Q += code_block_start(line)
                 elif line.startswith("$$") and "$$" not in line[2:]:
                     # 多行行间公式匹配开始
                     multiline_equation = True
                     Q += "\\[" + html.escape(line[2:])
-                elif line.startswith('"$$') and "$$" not in line[3:]:
-                    # 带引用的多行行间公式匹配开始
-                    multiline_equation = True
-                    Q += "\\[" + html.escape(line[3:])
                 else:
                     # 仅在非代码块时匹配行内格式
                     line = inline_equation(block_equation(line))
@@ -293,19 +284,10 @@ def main(file_path):
                     multiline_code_first_line = True
                     line = line[3:]
                     line = code_block_start(line)
-                elif line.startswith('"```'):
-                    multiline_code = True
-                    multiline_code_first_line = True
-                    line = line[4:]
-                    line = code_block_start(line)
                 elif line.startswith("$$") and "$$" not in line[2:]:
                     # 多行行间公式匹配开始
                     multiline_equation = True
                     line = "\\[" + html.escape(line[2:])
-                elif line.startswith('"$$') and "$$" not in line[3:]:
-                    # 带引用的多行行间公式匹配开始
-                    multiline_equation = True
-                    line = "\\[" + html.escape(line[3:])
                 elif not multiline_code and not multiline_equation:
                     # 仅在非多行公式和非多行代码才匹配所有行内格式
                     line = inline_equation(line)
@@ -357,29 +339,10 @@ def main(file_path):
                     else:
                         A_list[previous_answer_state] += line
                     continue
-                elif not multiline_code and line.startswith('"```'):
-                    multiline_code = True
-                    multiline_code_first_line = True
-                    line = line[4:]
-                    line = code_block_start(line)
-                    if question_state:
-                        Q += line
-                    else:
-                        A_list[previous_answer_state] += line
-                    continue
                 elif not multiline_equation and line.startswith("$$") and "$$" not in line[2:]:
                     # 多行行间公式匹配开始
                     multiline_equation = True
                     line = "\\[" + html.escape(line[2:])
-                    if question_state:
-                        Q += line
-                    else:
-                        A_list[previous_answer_state] += line
-                    continue
-                elif not multiline_equation and line.startswith('"$$') and "$$" not in line[3:]:
-                    # 带引用的多行行间公式匹配开始
-                    multiline_equation = True
-                    line = "\\[" + html.escape(line[3:])
                     if question_state:
                         Q += line
                     else:
@@ -395,13 +358,6 @@ def main(file_path):
                             else:
                                 Q += "\n" + html.escape(line[:-3]) + "</pre></code>"
                             multiline_code = False
-                        elif line.endswith('```"'):
-                            if multiline_code_first_line:
-                                Q += html.escape(line[:-4]) + "</pre></code>"
-                                multiline_code_first_line = False
-                            else:
-                                Q += "\n" + html.escape(line[:-4]) + "</pre></code>"
-                            multiline_code = False
                         else:
                             if multiline_code_first_line:
                                 Q += html.escape(line)
@@ -412,9 +368,6 @@ def main(file_path):
                         if line.endswith("$$"):
                             multiline_equation = False
                             Q += html.escape(line[:-2]) + "\\]"
-                        elif line.endswith('$$"'):
-                            multiline_equation = False
-                            Q += html.escape(line[:-3]) + "\\]"
                         else:
                             Q += "<br>" + html.escape(line)
                     else:
@@ -442,13 +395,6 @@ def main(file_path):
                             else:
                                 A_list[previous_answer_state] += "\n" + html.escape(line[:-3]) + "</pre></code></li>"
                             multiline_code = False
-                        elif line.endswith('```"'):
-                            if multiline_code_first_line:
-                                A_list[previous_answer_state] += html.escape(line[:-4]) + "</pre></code></li>"
-                                multiline_code_first_line = False
-                            else:
-                                A_list[previous_answer_state] += "\n" + html.escape(line[:-4]) + "</pre></code></li>"
-                            multiline_code = False
                         else:
                             if multiline_code_first_line:
                                 A_list[previous_answer_state] += html.escape(line)
@@ -461,9 +407,6 @@ def main(file_path):
                         if line.endswith("$$"):
                             multiline_equation = False
                             line = html.escape(line[:-2]) + "\\]"
-                        elif line.endswith('$$"'):
-                            multiline_equation = False
-                            line = html.escape(line[:-3]) + "\\]"
                         else:
                             line = html.escape(line)
                     else:
