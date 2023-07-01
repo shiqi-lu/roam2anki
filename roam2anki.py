@@ -226,7 +226,7 @@ def main(file_path):
                 h2 = False
                 h3 = False
                 line = line[len(question_prefix):]
-                if not line.strip():
+                if not line.strip() and not multiline_code:
                     continue
                 if line.startswith("```"):
                     multiline_code = True
