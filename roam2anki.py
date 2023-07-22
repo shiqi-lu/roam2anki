@@ -208,7 +208,7 @@ def main(file_path):
         h3 = False
         for line in f.readlines():
             line = line.strip('\n')
-            if not line.strip():
+            if not line.strip() and not multiline_code:
                 continue
             # print(len(line), line)
             if line.startswith(question_prefix):
